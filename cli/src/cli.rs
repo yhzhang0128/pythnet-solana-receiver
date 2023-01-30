@@ -18,7 +18,7 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum Action {
-    #[clap(about = "Post the price VAA on solana through wormhole")]
+    #[clap(about = "Verify and post the price VAA on solana")]
     PostPriceVAA {
         #[clap(short = 'v', long,
                help = "Price VAA from Pythnet")]
@@ -30,6 +30,8 @@ pub enum Action {
         )]
         keypair: String,
     },
+
+    #[clap(about = "Invoke the on-chain contract decoding the VAA")]
     InvokePriceReceiver {
         #[clap(
             short = 'k', long,
