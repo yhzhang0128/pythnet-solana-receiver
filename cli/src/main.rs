@@ -43,7 +43,7 @@ fn main() -> Result<()> {
 
     match cli.action {
         Action::PostPriceVAA { vaa, keypair } => {
-            // Hard-coded string values
+            // Hard-coded strings
             let rpc_client = RpcClient::new("https://pythnet.rpcpool.com/");
             // Is it necessary to use RpcClient::new_with_commitment?
             let wormhole = Pubkey::from_str("3u8hJUVTA4jH1wYAyUur7FFZVQ8H635K3tSHHF4ssjQ5").unwrap();
@@ -122,6 +122,7 @@ fn main() -> Result<()> {
                 &vec![&payer],
             )?;
         }
+
         Action::InvokePriceReceiver { keypair } => {
             println!("TBD, keypair={}", keypair);
         }
