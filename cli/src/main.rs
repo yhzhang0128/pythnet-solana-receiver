@@ -43,21 +43,23 @@ fn main() -> Result<()> {
 
     match cli.action {
         Action::PostPriceVAA { vaa, keypair } => {
+            println!("PostPriceVAA is invoked with vaa\"{}\"", vaa);
             // Hard-coded strings
-            let rpc_client = RpcClient::new("https://pythnet.rpcpool.com/");
-            // Is it necessary to use RpcClient::new_with_commitment?
+            let rpc_client = RpcClient::new("https://api.devnet.solana.com");
+            // Is RpcClient::new_with_commitment necessary?
             let wormhole = Pubkey::from_str("3u8hJUVTA4jH1wYAyUur7FFZVQ8H635K3tSHHF4ssjQ5").unwrap();
 
-            // Prepare a new account for storing the VAA
+            println!("Decode the VAA");
             let vaa_bytes: Vec<u8> = base64::decode(vaa)?;
             let vaa = VAA::from_bytes(vaa_bytes.clone())?;
-            let payer =
-                read_keypair_file(&*shellexpand::tilde(&keypair)).expect("Keypair not found");
+
+            println!("Transfer money to two accounts: signature_set and posted_vaa");
             let signature_set_keypair = Keypair::new();
             let signature_set_size = 4 + 19 + 32 + 4;
             let posted_vaa_size = 3 + 1 + 1 + 4 + 32 + 4 + 4 + 8 + 2 + 32 + 4 + vaa.payload.len();
             let posted_vaa_key = PostedVAA::key(&wormhole, vaa.digest().unwrap().hash);
-
+            let payer =
+                read_keypair_file(&*shellexpand::tilde(&keypair)).expect("Keypair not found");
             process_transaction(
                 &rpc_client,
                 vec![
@@ -75,7 +77,7 @@ fn main() -> Result<()> {
                 &vec![&payer],
             )?;
 
-            // Get wormhole guardian set data from solana devnet
+            println!("Get wormhole guardian set configuration");
             let wormhole_config = WormholeConfig::key(&wormhole, ());
             let wormhole_config_data =
                 WormholeConfig::try_from_slice(&rpc_client.get_account_data(&wormhole_config)?)?;
@@ -84,7 +86,7 @@ fn main() -> Result<()> {
             let guardian_set_data =
                 GuardianSet::try_from_slice(&rpc_client.get_account_data(&guardian_set)?)?;
 
-            // Invoke wormhole to verify the VAA
+            println!("Invoke wormhole on solana to verify the VAA");
             let verify_txs = verify_signatures_txs(
                 vaa_bytes.as_slice(),
                 guardian_set_data,
@@ -98,7 +100,7 @@ fn main() -> Result<()> {
                 process_transaction(&rpc_client, tx, &vec![&payer, &signature_set_keypair])?;
             }
 
-            // Upload the VAA data to the account
+            println!("Upload the VAA data to a solana account");
             let post_vaa_data = PostVAAData {
                 version:            vaa.version,
                 guardian_set_index: vaa.guardian_set_index,
